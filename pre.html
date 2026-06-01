@@ -128,7 +128,7 @@
                 transform: rotate(90deg) scale(1.02);
             }
         }
-        /* Полупрозрачная надпись PRE-RELEASE (замена BETA) */
+        /* Водяной знак PRE-RELEASE */
         .prerelease-watermark {
             position: fixed;
             top: 0;
@@ -162,10 +162,28 @@
             font-size: 0.75rem;
             color: #4a6a8a;
         }
+        .info-button {
+            display: inline-block;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .info-link {
+            background: #eef2ff;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            color: #1e40af;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .info-link:hover {
+            background: #e0e7ff;
+        }
     </style>
 </head>
 <body>
-<div class="prerelease-watermark" id="prereleaseLabel">PRE-RELEASE 1</div>
+<div class="prerelease-watermark" id="prereleaseLabel">PRE-RELEASE 1.1</div>
 <div class="container">
     <h1>Переводчик</h1>
     <div class="panel">
@@ -192,10 +210,13 @@
         </div>
     </div>
     <div class="status" id="statusMsg">Загрузка словаря...</div>
+    <div class="info-button">
+        <a href="about.html" class="info-link">О языках переводчика</a>
+    </div>
 </div>
 <script>
-    // ВЕРСИЯ PRE-RELEASE (ручная)
-    document.getElementById('prereleaseLabel').innerText = 'PRE-RELEASE 1';
+    // Версия PRE-RELEASE (ручная)
+    document.getElementById('prereleaseLabel').innerText = 'PRE-RELEASE 1.1';
 
     // Словари (заполняются из dictionary.json)
     let rusToMell = new Map();
