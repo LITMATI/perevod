@@ -259,16 +259,16 @@
         return r;
     }
 
-    // Улучшенная проверка мусорных слов
+    // Улучшенная проверка мусорных слов (чтобы "ывпт", "ааа", "прпосто" не переводились)
     function isGarbageWord(word) {
         if (!word || word.length === 0) return true;
         
-        // Слишком короткие (1-2 буквы) не переводим, если только это не исключение
+        // 1. Очень короткие слова (1-2 буквы) не переводим, если это не исключение
         if (word.length <= 2 && !rusToMell.has(word.toLowerCase()) && !rusToUsb.has(word.toLowerCase())) return true;
         
         const lower = word.toLowerCase();
         
-        // Паттерны смеха и бессмысленных повторов
+        // 2. Паттерны смеха и бессмысленных повторов
         const laughPatterns = [
             /(ха){2,}/i, /(ах){2,}/i, /(ол){2,}/i, /(ло){2,}/i, /(ла){2,}/i,
             /хехе/i, /хихи/i, /хохо/i, /лол/i, /кек/i, /агага/i, /уху/i,
@@ -276,29 +276,37 @@
         ];
         for (let p of laughPatterns) if (p.test(lower)) return true;
         
-        // Если слово состоит из повторяющихся одинаковых букв (ааа, ыыы)
+        // 3. Слово из повторяющихся одинаковых букв (ааа, ыыы)
         if (/(.)\1{3,}/i.test(lower)) return true;
         
-        // Если слово целиком в верхнем регистре и состоит из повторяющегося паттерна (АХАХА)
+        // 4. Ритмичные повторения типа АХАХА (чередование)
         if (word === word.toUpperCase() && lower.length >= 4 && /^(?:[а-яa-z])(?:[^а-яa-z]?\1)+$/i.test(lower)) return true;
         
-        // ПРОВЕРКА НА НАЛИЧИЕ ГЛАСНЫХ (обязательно)
+        // 5. Критическая проверка: наличие гласных (русских или английских)
         const hasRussianVowel = /[аеёиоуыэюя]/i.test(lower);
         const hasLatinVowel = /[aeiouy]/i.test(lower);
         if (!hasRussianVowel && !hasLatinVowel) return true;
         
-        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: если в слове более 2 согласных подряд и слово НЕ является исключением, считаем мусором
-        // Это отсекает бессмысленные наборы типа "ывпт" (впт — три согласные подряд)
+        // 6. Если в слове 3 и более согласных подряд И оно не является исключением — считаем мусором
+        //    (например "ывпт", "птк", "здн", "взбр")
         const consonantSeq = lower.match(/[бвгджзйклмнпрстфхцчшщ]{3,}/i);
         if (consonantSeq && !rusToMell.has(lower) && !rusToUsb.has(lower)) {
             return true;
         }
         
-        // Если слово содержит только одну гласную и много подряд идущих согласных (например "ывпт") — уже отсекли выше
+        // 7. Дополнительная проверка: очень длинная цепочка согласных с одной гласной в середине,
+        //    например "здравствствуйте" имеет много согласных, но это реальное слово.
+        //    Поэтому мы не трогаем слова, которые есть в исключениях или имеют больше 1 гласной.
+        const vowelCount = (lower.match(/[аеёиоуыэюяaeiouy]/gi) || []).length;
+        if (vowelCount === 1 && word.length >= 4 && !rusToMell.has(lower) && !rusToUsb.has(lower)) {
+            // односложные малопонятные аббревиатуры вроде "бгл" — мусор
+            if (word.length > 3 && /^[бвгджзйклмнпрстфхцчшщ]+$/i.test(word)) return true;
+        }
+        
         return false;
     }
 
-    // Остальные функции без изменений
+    // Общие правила перевода
     function applyGeneralRule(wordLower) {
         if (wordLower.endsWith("а")) return wordLower.slice(0, -1) + "оность";
         if (wordLower.endsWith("я")) return wordLower.slice(0, -1) + "ёность";
@@ -325,7 +333,7 @@
         return text.match(/([a-zA-Zа-яА-ЯёЁ]+|[^a-zA-Zа-яА-ЯёЁ]+)/g) || [];
     }
 
-    // ПЕРЕВОДЧИКИ
+    // Функции перевода
     function translateToMell(text) {
         if (!text.trim()) return "";
         let work = text;
@@ -448,7 +456,7 @@
         return out.join('');
     }
 
-    // ЗАГРУЗКА СЛОВАРЯ ИЗ ФАЙЛА dictionary.json
+    // Загрузка словаря из dictionary.json
     async function loadDictionary() {
         try {
             let resp = await fetch('dictionary.json');
@@ -499,7 +507,7 @@
         }
     }
 
-    // UI
+    // UI логика
     const inputArea = document.getElementById('inputArea');
     const outputArea = document.getElementById('outputArea');
     const leftLang = document.getElementById('leftLangSelect');
@@ -553,7 +561,7 @@
         updateTranslation();
     });
 
-    inputArea.value = 'нормально, попа, жопа, училка, нет, почему, хай, шприц, ывпт';
+    inputArea.value = 'нормально, попа, жопа, училка, нет, почему, хай, шприц, ывпт, ахаха, прпосто';
     loadDictionary();
 </script>
 </body>
