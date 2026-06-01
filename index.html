@@ -3,234 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>МеллсТранслейт | Русский ⇄ Меллстройный</title>
+    <title>Переводчик</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            background: #f2f5f9;
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
-            padding: 2rem 1.5rem;
+            background: #f5f7fb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
-
-        .translate-card {
-            max-width: 1200px;
+        .container {
+            max-width: 1000px;
             width: 100%;
             background: white;
-            border-radius: 28px;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.03);
-            overflow: hidden;
+            border-radius: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
         }
-
-        .top-bar {
-            padding: 18px 28px 8px 28px;
-            border-bottom: 1px solid #eef2f6;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
-        }
-        .logo {
+        h1 {
+            font-size: 1.5rem;
             font-weight: 500;
-            font-size: 1.1rem;
-            letter-spacing: -0.2px;
-            color: #1f2e3e;
-        }
-        .badge {
-            background: #f0f2f6;
-            padding: 4px 14px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            color: #2c4b66;
-        }
-
-        .translate-grid {
-            display: flex;
-            flex-wrap: wrap;
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: -0.3px;
         }
         .panel {
-            flex: 1;
-            min-width: 280px;
-            padding: 28px 28px 24px;
-            background: white;
+            display: flex;
+            gap: 1rem;
+            align-items: stretch;
         }
-        .panel:first-child {
-            border-right: 1px solid #eef2f8;
+        .box {
+            flex: 1;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.5rem;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
         }
         .lang-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .lang-name {
-            font-size: 0.85rem;
+            padding: 0.75rem 1rem 0 1rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            color: #3a5a78;
-            background: #f2f5f9;
-            padding: 5px 16px;
-            border-radius: 32px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .icon-btn {
-            background: transparent;
-            border: none;
-            color: #6f8faa;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 30px;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .icon-btn:hover {
-            background: #eff3f8;
-            color: #e6691a;
-        }
-        textarea {
+        textarea, .readonly-area {
             width: 100%;
-            min-height: 200px;
-            border: none;
-            outline: none;
+            min-height: 220px;
+            padding: 0.75rem 1rem 1rem 1rem;
             font-size: 1rem;
             line-height: 1.5;
-            font-family: 'Inter', monospace;
+            font-family: inherit;
+            background: transparent;
+            border: none;
+            outline: none;
             resize: vertical;
-            background: white;
-            color: #1e2f3f;
-            padding: 6px 0;
+            color: #0f172a;
         }
         textarea::placeholder {
-            color: #b9c4d0;
-            font-weight: 400;
+            color: #cbd5e1;
         }
-        .button-group {
-            margin-top: 16px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .btn-translate {
-            background: #eef2f8;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #1f3b4c;
-        }
-        .btn-translate:hover {
-            background: #e2e8f0;
-        }
-        .btn-primary {
-            background: #e6691a;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #ff7a2e;
+        .readonly-area {
+            background: #fafcff;
+            color: #1e293b;
+            cursor: default;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         .swap-btn {
-            background: white;
-            border: 1px solid #dee4ec;
-            border-radius: 48px;
-            width: 46px;
-            height: 46px;
+            align-self: center;
+            background: #f1f5f9;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 42px;
+            font-size: 1.25rem;
             cursor: pointer;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: #3b5d7e;
-            transition: 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 10px;
+            transition: 0.2s;
+            color: #475569;
+            flex-shrink: 0;
         }
         .swap-btn:hover {
-            background: #fafcff;
-            border-color: #cad2dd;
-            transform: scale(1.01);
+            background: #e2e8f0;
+            transform: scale(1.02);
         }
-        .bottom-actions {
-            margin-top: 20px;
-            padding-top: 12px;
-            border-top: 1px solid #f0f3f8;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        @media (max-width: 720px) {
-            body { padding: 1rem; }
-            .panel { padding: 20px; }
-            .panel:first-child { border-right: none; border-bottom: 1px solid #eef2f8; }
-            .translate-grid { flex-direction: column; }
-            textarea { min-height: 140px; }
+        @media (max-width: 700px) {
+            .panel {
+                flex-direction: column;
+            }
+            .swap-btn {
+                align-self: center;
+                margin: 0.5rem 0;
+                transform: rotate(90deg);
+            }
+            .swap-btn:hover {
+                transform: rotate(90deg) scale(1.02);
+            }
         }
     </style>
 </head>
 <body>
-<div class="translate-card">
-    <div class="top-bar">
-        <div class="logo">МеллсТранслейт</div>
-        <div class="badge">русский ⇄ меллстройный</div>
-    </div>
-
-    <div class="translate-grid">
-        <!-- Левая панель: русский -->
-        <div class="panel">
-            <div class="lang-header">
-                <span class="lang-name">Русский</span>
-                <button class="icon-btn" id="clearLeftBtn">Очистить</button>
-            </div>
-            <textarea id="sourceText" placeholder="Введите текст на русском...&#10;например: плохое, попа, жопа, стул, окно, училка, нет, почему"></textarea>
-            <div class="button-group">
-                <button class="btn-translate btn-primary" id="toMellBtn">Перевести на меллстройный →</button>
-            </div>
-            <div class="bottom-actions">
-                <button class="icon-btn" id="copyLeftBtn">Копировать</button>
-            </div>
+<div class="container">
+    <h1>Переводчик</h1>
+    <div class="panel">
+        <div class="box">
+            <div class="lang-header" id="leftLang">Русский</div>
+            <textarea id="inputArea" placeholder="Введите текст..."></textarea>
         </div>
-
-        <!-- Кнопка обмена -->
-        <div style="display: flex; align-items: center; justify-content: center; background: white;">
-            <button class="swap-btn" id="swapLangBtn" title="Поменять местами">⇄</button>
-        </div>
-
-        <!-- Правая панель: меллстройный -->
-        <div class="panel">
-            <div class="lang-header">
-                <span class="lang-name">Меллстройный</span>
-                <button class="icon-btn" id="clearRightBtn">Очистить</button>
-            </div>
-            <textarea id="targetText" placeholder="Перевод появится здесь...&#10;или введите текст на меллстройном, например: шакал ебучий"></textarea>
-            <div class="button-group">
-                <button class="btn-translate btn-primary" id="toRusBtn">← Перевести на русский</button>
-            </div>
-            <div class="bottom-actions">
-                <button class="icon-btn" id="copyRightBtn">Копировать</button>
-            </div>
+        <button class="swap-btn" id="swapBtn">⇄</button>
+        <div class="box">
+            <div class="lang-header" id="rightLang">Меллстройный</div>
+            <div class="readonly-area" id="outputArea"></div>
         </div>
     </div>
 </div>
 
 <script>
     // --------------------------------------------------------------
-    // 1. СЛОВАРЬ ИСКЛЮЧЕНИЙ (из вашего Excel)
+    // 1. СЛОВАРЬ ИСКЛЮЧЕНИЙ (Excel + ручные)
     // --------------------------------------------------------------
     const rusToMellExceptions = new Map([
         ["русский язык", "Меллстройность"],
@@ -256,34 +160,25 @@
         ["нормально", "ну нормально не ну еще посидим еще посидим"]
     ]);
 
-    // Обратные исключения (меллстройный → русский)
     const mellToRusExceptions = new Map();
     for (let [rus, mell] of rusToMellExceptions.entries()) {
         mellToRusExceptions.set(mell.toLowerCase(), rus);
     }
-    // дополнительные обратные соответствия для устойчивых форм
-    mellToRusExceptions.set("друн", "друг");
-    mellToRusExceptions.set("друность", "друган");
-    mellToRusExceptions.set("учительность", "училка");
-    mellToRusExceptions.set("учинительность", "ученик");
-    mellToRusExceptions.set("учебность", "учеба");
-    mellToRusExceptions.set("кьо этость", "кто это");
-    mellToRusExceptions.set("кьо", "кто");
-    mellToRusExceptions.set("этость", "это");
-    mellToRusExceptions.set("ч", "я");
-    mellToRusExceptions.set("меллстройность", "русский язык");
-    mellToRusExceptions.set("жопотность", "жопа");
-    mellToRusExceptions.set("отказано", "не");
-    mellToRusExceptions.set("п.ч.т.м.ш", "почему");
-    mellToRusExceptions.set("спасибо хорошо", "спасибо");
-    mellToRusExceptions.set("хорошо и спасибо", "хорошо");
-    mellToRusExceptions.set("какатность", "кака");
-    mellToRusExceptions.set("сидить", "сиди");
-    mellToRusExceptions.set("какашатность", "какашка");
-    mellToRusExceptions.set("шакал ебучий", "плохое");
-    mellToRusExceptions.set("ну нормально не ну еще посидим еще посидим", "нормально");
+    // дополнительные обратные соответствия
+    const extraReverse = [
+        ["друн", "друг"], ["друность", "друган"], ["учительность", "училка"],
+        ["учинительность", "ученик"], ["учебность", "учеба"], ["кьо этость", "кто это"],
+        ["кьо", "кто"], ["этость", "это"], ["ч", "я"], ["меллстройность", "русский язык"],
+        ["жопотность", "жопа"], ["отказано", "не"], ["п.ч.т.м.ш", "почему"],
+        ["спасибо хорошо", "спасибо"], ["хорошо и спасибо", "хорошо"],
+        ["какатность", "кака"], ["сидить", "сиди"], ["какашатность", "какашка"],
+        ["шакал ебучий", "плохое"], ["ну нормально не ну еще посидим еще посидим", "нормально"]
+    ];
+    for (let [mell, rus] of extraReverse) {
+        mellToRusExceptions.set(mell, rus);
+    }
 
-    // Фразы для точной замены (с пробелами, обрабатываются отдельно)
+    // Фразы с пробелами для приоритетной замены
     const phraseRusToMell = [
         ["русский язык", "Меллстройность"],
         ["кто это", "Кьо этость"],
@@ -302,29 +197,16 @@
         ["кьо этость", "кто это"],
         ["меллстройность", "русский язык"],
         ["п.ч.т.м.ш", "почему"],
-        ["отказано", "не"],
-        ["друн", "друг"],
-        ["друность", "друган"],
-        ["учительность", "училка"],
-        ["учинительность", "ученик"],
-        ["учебность", "учеба"],
-        ["ч", "я"],
-        ["жопотность", "жопа"],
-        ["какатность", "кака"],
-        ["сидить", "сиди"],
-        ["какашатность", "какашка"]
+        ["отказано", "не"]
     ];
 
-    // Функция для замены фраз (учитывает границы слова и пробелы)
-    function replacePhrases(text, phrases, direction) {
+    // Замена фраз с границами слов (учитывает пробелы и знаки препинания)
+    function replacePhrases(text, phrases) {
         let result = text;
         for (let [from, to] of phrases) {
-            // Экранируем спецсимволы
-            const escapedFrom = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Ищем как отдельное слово/фразу: начало строки или пробел или знак препинания, затем фраза, затем конец или пробел или знак препинания
-            const regex = new RegExp(`(^|[\\s\\p{P}])(${escapedFrom})(?=[\\s\\p{P}]|$)`, 'giu');
+            const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(^|[\\s\\p{P}])(${escaped})(?=[\\s\\p{P}]|$)`, 'giu');
             result = result.replace(regex, (match, before, word) => {
-                // Сохраняем регистр первой буквы? Упрощённо: заменяем с учётом регистра исходного совпадения
                 let replacement = to;
                 if (word === word.toUpperCase()) replacement = to.toUpperCase();
                 else if (word[0] === word[0].toUpperCase() && word.slice(1).toLowerCase() === word.slice(1))
@@ -337,7 +219,7 @@
     }
 
     // --------------------------------------------------------------
-    // 2. ФУНКЦИЯ: мусорное слово (не переводим)
+    // 2. МУСОРНЫЕ СЛОВА (не переводим)
     // --------------------------------------------------------------
     function isGarbageWord(word) {
         if (!word || word.length === 0) return true;
@@ -345,59 +227,47 @@
         if (word.length <= 2 && !rusToMellExceptions.has(lower)) return true;
         const laughPatterns = [
             /(ха){2,}/i, /(ах){2,}/i, /(ол){2,}/i, /(ло){2,}/i, /(ла){2,}/i,
-            /хехе/i, /хихи/i, /хохо/i, /лол/i, /кек/i, /ббб/i, /агага/i, /уху/i,
+            /хехе/i, /хихи/i, /хохо/i, /лол/i, /кек/i, /агага/i, /уху/i,
             /ааа+/i, /ыыы+/i, /еее+/i
         ];
-        for (let pattern of laughPatterns) {
-            if (pattern.test(lower)) return true;
-        }
+        for (let p of laughPatterns) if (p.test(lower)) return true;
         if (/(.)\1{3,}/i.test(lower)) return true;
         if (word === word.toUpperCase() && lower.length >= 4 && /^(?:[а-яa-z])(?:[^а-яa-z]?\1)+$/i.test(lower)) return true;
-        const hasVowel = /[аеёиоуыэюяaeiou]/i.test(lower);
-        if (!hasVowel) return true;
+        if (!/[аеёиоуыэюяaeiou]/i.test(lower)) return true;
         return false;
     }
 
     // --------------------------------------------------------------
-    // 3. ОСНОВНОЕ ПРАВИЛО (попа → попоность и т.д.)
+    // 3. ОСНОВНЫЕ ПРАВИЛА (попа → попоность)
     // --------------------------------------------------------------
     function applyGeneralRule(wordLower) {
-        if (wordLower.endsWith("а")) {
-            return wordLower.slice(0, -1) + "оность";
-        }
-        if (wordLower.endsWith("я")) {
-            return wordLower.slice(0, -1) + "ёность";
-        }
-        if (wordLower.endsWith("о")) {
-            return wordLower.slice(0, -1) + "ость";
-        }
-        if (wordLower.endsWith("е")) {
-            return wordLower.slice(0, -1) + "есть";
-        }
+        if (wordLower.endsWith("а")) return wordLower.slice(0, -1) + "оность";
+        if (wordLower.endsWith("я")) return wordLower.slice(0, -1) + "ёность";
+        if (wordLower.endsWith("о")) return wordLower.slice(0, -1) + "ость";
+        if (wordLower.endsWith("е")) return wordLower.slice(0, -1) + "есть";
         return wordLower + "ность";
     }
 
-    // Обратное правило: отрезаем суффикс
-    function reverseGeneralRule(mellWordLower) {
-        if (mellWordLower.endsWith("оность")) {
-            let base = mellWordLower.slice(0, -6);
-            if (base.length > 0) return base + "а";
+    function reverseGeneralRule(wordLower) {
+        if (wordLower.endsWith("оность")) {
+            let base = wordLower.slice(0, -6);
+            if (base) return base + "а";
         }
-        if (mellWordLower.endsWith("ёность")) {
-            let base = mellWordLower.slice(0, -6);
-            if (base.length > 0) return base + "я";
+        if (wordLower.endsWith("ёность")) {
+            let base = wordLower.slice(0, -6);
+            if (base) return base + "я";
         }
-        if (mellWordLower.endsWith("ость")) {
-            let base = mellWordLower.slice(0, -4);
-            if (base.length > 0) return base + "о";
+        if (wordLower.endsWith("ость")) {
+            let base = wordLower.slice(0, -4);
+            if (base) return base + "о";
         }
-        if (mellWordLower.endsWith("есть")) {
-            let base = mellWordLower.slice(0, -4);
-            if (base.length > 0) return base + "е";
+        if (wordLower.endsWith("есть")) {
+            let base = wordLower.slice(0, -4);
+            if (base) return base + "е";
         }
-        if (mellWordLower.endsWith("ность")) {
-            let base = mellWordLower.slice(0, -5);
-            if (base.length > 0) return base;
+        if (wordLower.endsWith("ность")) {
+            let base = wordLower.slice(0, -5);
+            if (base) return base;
         }
         return null;
     }
@@ -405,9 +275,8 @@
     function applyCase(original, transformed) {
         if (!original || !transformed) return transformed;
         if (original === original.toUpperCase()) return transformed.toUpperCase();
-        if (original[0] === original[0].toUpperCase() && original.slice(1).toLowerCase() === original.slice(1)) {
+        if (original[0] === original[0].toUpperCase() && original.slice(1).toLowerCase() === original.slice(1))
             return transformed.charAt(0).toUpperCase() + transformed.slice(1).toLowerCase();
-        }
         return transformed.toLowerCase();
     }
 
@@ -417,130 +286,117 @@
     }
 
     // --------------------------------------------------------------
-    // 4. ПЕРЕВОД: РУССКИЙ → МЕЛЛСТРОЙНЫЙ
+    // 4. ПЕРЕВОД РУССКИЙ -> МЕЛЛСТРОЙНЫЙ
     // --------------------------------------------------------------
-    function translateToMellstroy(text) {
+    function translateToMell(text) {
         if (!text.trim()) return "";
-        // Сначала заменяем фразы (включая "плохое" -> "шакал ебучий")
-        let working = replacePhrases(text, phraseRusToMell, 'rus-to-mell');
-
+        let working = replacePhrases(text, phraseRusToMell);
         const tokens = tokenize(working);
-        const result = [];
-
-        for (let token of tokens) {
-            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(token)) {
-                result.push(token);
+        const out = [];
+        for (let t of tokens) {
+            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(t)) {
+                out.push(t);
                 continue;
             }
-            const lowerToken = token.toLowerCase();
-
-            if (rusToMellExceptions.has(lowerToken)) {
-                let trans = rusToMellExceptions.get(lowerToken);
-                result.push(applyCase(token, trans));
+            const low = t.toLowerCase();
+            if (rusToMellExceptions.has(low)) {
+                out.push(applyCase(t, rusToMellExceptions.get(low)));
                 continue;
             }
-
-            if (isGarbageWord(token)) {
-                result.push(token);
+            if (isGarbageWord(t)) {
+                out.push(t);
                 continue;
             }
-
-            let transformed = applyGeneralRule(lowerToken);
-            result.push(applyCase(token, transformed));
+            out.push(applyCase(t, applyGeneralRule(low)));
         }
-        return result.join('');
+        return out.join('');
     }
 
     // --------------------------------------------------------------
-    // 5. ОБРАТНЫЙ ПЕРЕВОД: МЕЛЛСТРОЙНЫЙ → РУССКИЙ
+    // 5. ПЕРЕВОД МЕЛЛСТРОЙНЫЙ -> РУССКИЙ
     // --------------------------------------------------------------
-    function translateToRussian(text) {
+    function translateToRus(text) {
         if (!text.trim()) return "";
-        // Сначала заменяем фразы (включая "шакал ебучий" -> "плохое")
-        let working = replacePhrases(text, phraseMellToRus, 'mell-to-rus');
-
+        let working = replacePhrases(text, phraseMellToRus);
         const tokens = tokenize(working);
-        const result = [];
-
-        for (let token of tokens) {
-            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(token)) {
-                result.push(token);
+        const out = [];
+        for (let t of tokens) {
+            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(t)) {
+                out.push(t);
                 continue;
             }
-            const lowerToken = token.toLowerCase();
-
-            if (mellToRusExceptions.has(lowerToken)) {
-                let rusWord = mellToRusExceptions.get(lowerToken);
-                result.push(applyCase(token, rusWord));
+            const low = t.toLowerCase();
+            if (mellToRusExceptions.has(low)) {
+                out.push(applyCase(t, mellToRusExceptions.get(low)));
                 continue;
             }
-
-            let recovered = reverseGeneralRule(lowerToken);
-            if (recovered && recovered.length > 0) {
-                result.push(applyCase(token, recovered));
+            const recovered = reverseGeneralRule(low);
+            if (recovered) {
+                out.push(applyCase(t, recovered));
             } else {
-                result.push(token);
+                out.push(t);
             }
         }
-
-        let final = result.join('');
-        final = final.replace(/\bЧ\b/g, 'Я').replace(/\bч\b/g, 'я');
-        return final;
+        let result = out.join('');
+        result = result.replace(/\bЧ\b/g, 'Я').replace(/\bч\b/g, 'я');
+        return result;
     }
 
     // --------------------------------------------------------------
-    // 6. UI и кнопки
+    // 6. UI: строго как в Google — ввод только слева, вывод справа
     // --------------------------------------------------------------
-    const sourceTextarea = document.getElementById('sourceText');
-    const targetTextarea = document.getElementById('targetText');
-    const toMellBtn = document.getElementById('toMellBtn');
-    const toRusBtn = document.getElementById('toRusBtn');
-    const swapBtn = document.getElementById('swapLangBtn');
-    const clearLeftBtn = document.getElementById('clearLeftBtn');
-    const clearRightBtn = document.getElementById('clearRightBtn');
-    const copyLeftBtn = document.getElementById('copyLeftBtn');
-    const copyRightBtn = document.getElementById('copyRightBtn');
+    const inputArea = document.getElementById('inputArea');
+    const outputArea = document.getElementById('outputArea');
+    const leftLangLabel = document.getElementById('leftLang');
+    const rightLangLabel = document.getElementById('rightLang');
+    const swapBtn = document.getElementById('swapBtn');
 
-    toMellBtn.addEventListener('click', () => {
-        const ruText = sourceTextarea.value;
-        const mellResult = translateToMellstroy(ruText);
-        targetTextarea.value = mellResult;
-    });
+    let currentMode = 'ru-to-mell'; // 'ru-to-mell' или 'mell-to-ru'
 
-    toRusBtn.addEventListener('click', () => {
-        const mellText = targetTextarea.value;
-        const ruResult = translateToRussian(mellText);
-        sourceTextarea.value = ruResult;
-    });
-
-    swapBtn.addEventListener('click', () => {
-        const leftText = sourceTextarea.value;
-        const rightText = targetTextarea.value;
-        sourceTextarea.value = rightText;
-        targetTextarea.value = leftText;
-    });
-
-    clearLeftBtn.addEventListener('click', () => {
-        sourceTextarea.value = '';
-    });
-    clearRightBtn.addEventListener('click', () => {
-        targetTextarea.value = '';
-    });
-
-    async function copyToClipboard(textarea, btn) {
-        try {
-            await navigator.clipboard.writeText(textarea.value);
-            const original = btn.innerText;
-            btn.innerText = 'Скопировано ✓';
-            setTimeout(() => { btn.innerText = original; }, 1200);
-        } catch (err) {}
+    function updateTranslation() {
+        const inputText = inputArea.value;
+        if (currentMode === 'ru-to-mell') {
+            outputArea.innerText = translateToMell(inputText);
+        } else {
+            outputArea.innerText = translateToRus(inputText);
+        }
     }
-    copyLeftBtn.addEventListener('click', () => copyToClipboard(sourceTextarea, copyLeftBtn));
-    copyRightBtn.addEventListener('click', () => copyToClipboard(targetTextarea, copyRightBtn));
 
-    // Демонстрация: показываем правильный пример
-    sourceTextarea.value = "плохое, попа, жопа, училка, нет, почему";
-    targetTextarea.value = translateToMellstroy(sourceTextarea.value);
+    let debounceTimer;
+    function debouncedUpdate() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(updateTranslation, 250);
+    }
+
+    inputArea.addEventListener('input', debouncedUpdate);
+
+    function swapLanguages() {
+        // меняем режим
+        if (currentMode === 'ru-to-mell') {
+            currentMode = 'mell-to-ru';
+            leftLangLabel.innerText = 'Меллстройный';
+            rightLangLabel.innerText = 'Русский';
+        } else {
+            currentMode = 'ru-to-mell';
+            leftLangLabel.innerText = 'Русский';
+            rightLangLabel.innerText = 'Меллстройный';
+        }
+        // переносим текст из правого (вывода) в левый (ввод) и очищаем вывод?
+        // Логика: при обмене местами меняем исходный текст на перевод и наоборот.
+        const leftText = inputArea.value;
+        const rightText = outputArea.innerText;
+        inputArea.value = rightText;
+        updateTranslation(); // пересчитаем перевод для нового текста
+    }
+
+    swapBtn.addEventListener('click', swapLanguages);
+
+    // демо-пример
+    inputArea.value = 'плохое, попа, жопа, училка, нет, почему, ахахаха';
+    currentMode = 'ru-to-mell';
+    leftLangLabel.innerText = 'Русский';
+    rightLangLabel.innerText = 'Меллстройный';
+    updateTranslation();
 </script>
 </body>
 </html>
