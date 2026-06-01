@@ -164,7 +164,7 @@
     </style>
 </head>
 <body>
-<div class="beta-watermark" id="betaLabel">BETA</div>
+<div class="beta-watermark" id="betaLabel">BETA 5.8</div>
 <div class="container">
     <h1>Переводчик</h1>
     <div class="panel">
@@ -193,18 +193,8 @@
     <div class="status" id="statusMsg">Загрузка словаря...</div>
 </div>
 <script>
-    (function(){
-        let beta = localStorage.getItem('betaVersion');
-        if (!beta) beta = '5.8';
-        else {
-            let [major, minor] = beta.split('.');
-            minor = parseInt(minor) + 1;
-            if (minor >= 10) { major = parseInt(major) + 1; minor = 0; }
-            beta = major + '.' + minor;
-        }
-        localStorage.setItem('betaVersion', beta);
-        document.getElementById('betaLabel').innerText = 'BETA ' + beta;
-    })();
+    // ВЕРСИЯ – ТОЛЬКО РУЧНАЯ (увеличивай здесь, когда исправил баг)
+    document.getElementById('betaLabel').innerText = 'BETA 5.8';
 
     // Словари (заполняются из dictionary.json)
     let rusToMell = new Map();
@@ -216,7 +206,7 @@
     let phraseRusToUsb = [];
     let phraseUsbToRus = [];
 
-    // Транслитерация (не зависит от словаря)
+    // Таблицы транслитерации (только для USB)
     const cyrToLat = {
         'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z',
         'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
@@ -268,7 +258,7 @@
     function isGarbage(w) {
         if (!w) return true;
         let l = w.toLowerCase();
-        if (w.length <= 2 && !rusToMell.has(l)) return true;
+        if (w.length <= 2 && !rusToMell.has(l) && !rusToUsb.has(l)) return true;
         let patterns = [/(ха){2,}/i,/(ах){2,}/i,/(ол){2,}/i,/(ло){2,}/i,/(ла){2,}/i,
             /хехе/i,/хихи/i,/хохо/i,/лол/i,/кек/i,/агага/i,/уху/i,/ааа+/i,/ыыы+/i,/еее+/i];
         for (let p of patterns) if (p.test(l)) return true;
@@ -303,7 +293,7 @@
         return text.match(/([a-zA-Zа-яА-ЯёЁ]+|[^a-zA-Zа-яА-ЯёЁ]+)/g) || [];
     }
 
-    // Функции перевода (используют данные из словаря)
+    // ПЕРЕВОДЧИКИ (используют данные, загруженные из JSON)
     function translateToMell(text) {
         if (!text.trim()) return "";
         let work = text;
@@ -426,20 +416,20 @@
         return out.join('');
     }
 
-    // Загрузка словаря с GitHub (файл dictionary.json)
+    // ЗАГРУЗКА СЛОВАРЯ ИЗ ФАЙЛА dictionary.json (ГИТХАБ)
     async function loadDictionary() {
         try {
             let resp = await fetch('dictionary.json');
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             let dict = await resp.json();
 
-            // Очищаем перед загрузкой
+            // Очистка перед загрузкой
             rusToMell.clear();
             mellToRus.clear();
             rusToUsb.clear();
             usbToRus.clear();
 
-            // Загружаем основные словари
+            // Основные словари
             if (dict.rusToMell) {
                 for (let [k, v] of Object.entries(dict.rusToMell)) {
                     rusToMell.set(k.toLowerCase(), v);
@@ -451,7 +441,7 @@
                 }
             }
 
-            // Строим обратные отображения
+            // Обратные отображения
             for (let [rus, mell] of rusToMell.entries()) {
                 mellToRus.set(mell.toLowerCase(), rus);
             }
@@ -459,7 +449,7 @@
                 usbToRus.set(usb.toLowerCase(), rus);
             }
 
-            // Загружаем дополнительные обратные соответствия (если есть)
+            // Дополнительные обратные соответствия (если есть)
             if (dict.extraReverse) {
                 for (let [m, r] of Object.entries(dict.extraReverse)) {
                     if (!mellToRus.has(m.toLowerCase())) mellToRus.set(m.toLowerCase(), r);
@@ -471,35 +461,27 @@
                 }
             }
 
-            // Загружаем фразы для составных замен (обязательно)
-            if (dict.phrases) {
-                phraseRusToMell = dict.phrases.rusToMell || [];
-                phraseMellToRus = dict.phrases.mellToRus || [];
-                phraseRusToUsb = dict.phrases.rusToUsb || [];
-                phraseUsbToRus = dict.phrases.usbToRus || [];
-            } else {
-                // Если в JSON нет секции phrases, используем пустые массивы (перевод будет только по словарю)
-                phraseRusToMell = [];
-                phraseMellToRus = [];
-                phraseRusToUsb = [];
-                phraseUsbToRus = [];
-            }
+            // Фразы (составные выражения) – обязательно из JSON
+            phraseRusToMell = dict.phrases?.rusToMell || [];
+            phraseMellToRus = dict.phrases?.mellToRus || [];
+            phraseRusToUsb = dict.phrases?.rusToUsb || [];
+            phraseUsbToRus = dict.phrases?.usbToRus || [];
 
-            // Сортировка для корректной замены длинных фраз
+            // Сортировка для корректной замены (от длинных к коротким)
             phraseRusToMell.sort((a,b)=>b[0].length - a[0].length);
             phraseMellToRus.sort((a,b)=>b[0].length - a[0].length);
             phraseRusToUsb.sort((a,b)=>b[0].length - a[0].length);
             phraseUsbToRus.sort((a,b)=>b[0].length - a[0].length);
 
             document.getElementById('statusMsg').innerHTML = 'Словарь загружен';
-            updateTranslation(); // применяем перевод после загрузки
+            updateTranslation(); // применяем перевод
         } catch(e) {
             console.error(e);
-            document.getElementById('statusMsg').innerHTML = 'Ошибка загрузки dictionary.json. Убедитесь, что файл лежит рядом и содержит корректные данные.';
+            document.getElementById('statusMsg').innerHTML = 'Ошибка загрузки dictionary.json. Проверьте файл.';
         }
     }
 
-    // UI обработчики
+    // UI
     const inputArea = document.getElementById('inputArea');
     const outputArea = document.getElementById('outputArea');
     const leftLang = document.getElementById('leftLangSelect');
@@ -548,13 +530,12 @@
         let l = leftLang.value, r = rightLang.value;
         leftLang.value = r;
         rightLang.value = l;
-        let leftText = inputArea.value;
-        let rightText = outputArea.innerText;
-        inputArea.value = rightText;
+        let lt = inputArea.value, rt = outputArea.innerText;
+        inputArea.value = rt;
         updateTranslation();
     });
 
-    // Стартовый текст и загрузка словаря
+    // Стартовый текст (пример)
     inputArea.value = 'нормально, попа, жопа, училка, нет, почему, хай, шприц';
     loadDictionary();
 </script>
