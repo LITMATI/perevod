@@ -208,6 +208,44 @@
         mellToRusExceptions.set(mell, rus);
     }
 
+    const rusToUsbExceptions = new Map([
+        ["русский язык", "USB"],
+        ["училка", "UCHILKE"],
+        ["друг", "DRUG"],
+        ["друган", "DRUGA"],
+        ["дружбан", "DRUGAN"],
+        ["ученик", "UCHINIK"],
+        ["учеба", "UCHBA"],
+        ["кто это", "KTO ETA"],
+        ["я", "IA"],
+        ["жопа", "SHOPA"],
+        ["не", "NIE"],
+        ["нет", "NIET"],
+        ["не разрешаю", "NIE RASHA"],
+        ["почему", "PCHMA"],
+        ["спасибо", "SPS"],
+        ["хорошо", "OkEy"],
+        ["кака", "KAKA"],
+        ["сиди", "CD"],
+        ["какашка", "KAKASHEHKA"],
+        ["плохое", "PLXO"],
+        ["нормально", "NORM"],
+        ["сиди и не пизди", "CD I NIE PCD"],
+        ["фобия", "FBO"],
+        ["и", "I"],
+        ["шприц", "CHPRIC"],
+        ["слабительное", "SLABIT"],
+        ["кайф", "KAIF"],
+        ["юсб", "USB"],
+        ["usb", "USB"],
+        ["пизди", "pcd"]
+    ]);
+
+    const usbToRusExceptions = new Map();
+    for (let [rus, usb] of rusToUsbExceptions.entries()) {
+        usbToRusExceptions.set(usb.toLowerCase(), rus);
+    }
+
     const phraseRusToMell = [
         ["русский язык", "Меллстройность"],
         ["кто это", "Кьо этость"],
@@ -295,12 +333,48 @@
 
     function translateUsbToRussian(text) {
         if (!text.trim()) return text;
-        return transliterateToCyrillic(text);
+        let words = text.split(/(\s+|[^\w\s])/);
+        let result = [];
+        for (let w of words) {
+            if (/^[a-zA-Z]+$/.test(w)) {
+                let lower = w.toLowerCase();
+                if (usbToRusExceptions.has(lower)) {
+                    let rus = usbToRusExceptions.get(lower);
+                    if (w === w.toUpperCase()) rus = rus.toUpperCase();
+                    else if (w[0] === w[0].toUpperCase() && w.slice(1).toLowerCase() === w.slice(1))
+                        rus = rus.charAt(0).toUpperCase() + rus.slice(1).toLowerCase();
+                    result.push(rus);
+                } else {
+                    result.push(transliterateToCyrillic(w));
+                }
+            } else {
+                result.push(w);
+            }
+        }
+        return result.join('');
     }
 
     function translateRussianToUsb(text) {
         if (!text.trim()) return text;
-        return transliterateToLatin(text);
+        let words = text.split(/(\s+|[^\w\s])/);
+        let result = [];
+        for (let w of words) {
+            if (/^[а-яА-ЯёЁ]+$/.test(w)) {
+                let lower = w.toLowerCase();
+                if (rusToUsbExceptions.has(lower)) {
+                    let usb = rusToUsbExceptions.get(lower);
+                    if (w === w.toUpperCase()) usb = usb.toUpperCase();
+                    else if (w[0] === w[0].toUpperCase() && w.slice(1).toLowerCase() === w.slice(1))
+                        usb = usb.charAt(0).toUpperCase() + usb.slice(1).toLowerCase();
+                    result.push(usb);
+                } else {
+                    result.push(transliterateToLatin(w));
+                }
+            } else {
+                result.push(w);
+            }
+        }
+        return result.join('');
     }
 
     function isGarbageWord(word) {
@@ -437,11 +511,6 @@
             }
         }
         return out.join('');
-    }
-
-    function translateViaRussian(text, srcLang, dstLang) {
-        const rus = translateDirect(text, srcLang, 'ru');
-        return translateDirect(rus, 'ru', dstLang);
     }
 
     function translate(text, srcLang, dstLang) {
