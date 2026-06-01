@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Переводчик</title>
+    <title>Переводчик | Русский / Меллстройный / USB</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
             padding: 1rem;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
             background: white;
             border-radius: 2rem;
@@ -32,16 +32,18 @@
             font-weight: 500;
             color: #1e293b;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             letter-spacing: -0.3px;
         }
         .panel {
             display: flex;
             gap: 1rem;
             align-items: stretch;
+            flex-wrap: wrap;
         }
         .box {
             flex: 1;
+            min-width: 260px;
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 1.5rem;
@@ -49,12 +51,22 @@
             flex-direction: column;
         }
         .lang-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 0.75rem 1rem 0 1rem;
+            gap: 0.5rem;
+        }
+        select {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #1e293b;
+            cursor: pointer;
+            outline: none;
         }
         textarea, .readonly-area {
             width: 100%;
@@ -100,7 +112,13 @@
             background: #e2e8f0;
             transform: scale(1.02);
         }
-        @media (max-width: 700px) {
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: #4a6a8a;
+        }
+        @media (max-width: 760px) {
             .panel {
                 flex-direction: column;
             }
@@ -120,287 +138,399 @@
     <h1>Переводчик</h1>
     <div class="panel">
         <div class="box">
-            <div class="lang-header" id="leftLang">Русский</div>
+            <div class="lang-header">
+                <select id="leftLangSelect">
+                    <option value="ru">Русский</option>
+                    <option value="mell">Меллстройный</option>
+                    <option value="usb">USB</option>
+                </select>
+            </div>
             <textarea id="inputArea" placeholder="Введите текст..."></textarea>
         </div>
         <button class="swap-btn" id="swapBtn">⇄</button>
         <div class="box">
-            <div class="lang-header" id="rightLang">Меллстройный</div>
+            <div class="lang-header">
+                <select id="rightLangSelect">
+                    <option value="mell">Меллстройный</option>
+                    <option value="ru">Русский</option>
+                    <option value="usb">USB</option>
+                </select>
+            </div>
             <div class="readonly-area" id="outputArea"></div>
         </div>
     </div>
+    <div class="status" id="statusMsg">Загрузка словаря...</div>
 </div>
 
 <script>
-    const rusToMellExceptions = new Map([
-        ["русский язык", "Меллстройность"],
-        ["училка", "Учительность"],
-        ["друг", "Друн"],
-        ["друган", "Друность"],
-        ["дружбан", "Друность"],
-        ["ученик", "Учинительность"],
-        ["учеба", "Учебность"],
-        ["кто это", "Кьо этость"],
-        ["я", "Ч"],
-        ["жопа", "жопотность"],
-        ["не", "отказано"],
-        ["нет", "отказано"],
-        ["не разрешаю", "отказано"],
-        ["почему", "П.Ч.Т.М.Ш"],
-        ["спасибо", "спасибо хорошо"],
-        ["хорошо", "хорошо и спасибо"],
-        ["кака", "какатность"],
-        ["сиди", "сидить"],
-        ["какашка", "какашатность"],
-        ["плохое", "шакал ебучий"],
-        ["нормально", "ну нормально не ну еще посидим еще посидим"]
-    ]);
+    let rusToMellExceptions = new Map();
+    let rusToUsbExceptions = new Map();
+    let mellToRusExceptions = new Map();
+    let usbToRusExceptions = new Map();
+    let phraseRusToMell = [];
+    let phraseMellToRus = [];
+    let phraseRusToUsb = [];
+    let phraseUsbToRus = [];
 
-    const mellToRusExceptions = new Map();
-    for (let [rus, mell] of rusToMellExceptions.entries()) {
-        mellToRusExceptions.set(mell.toLowerCase(), rus);
+    async function loadDictionary() {
+        try {
+            const response = await fetch('dictionary.json');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const dict = await response.json();
+
+            if (dict.rusToMell) {
+                for (const [key, val] of Object.entries(dict.rusToMell))
+                    rusToMellExceptions.set(key.toLowerCase(), val);
+            }
+            if (dict.rusToUsb) {
+                for (const [key, val] of Object.entries(dict.rusToUsb))
+                    rusToUsbExceptions.set(key.toLowerCase(), val);
+            }
+
+            for (let [rus, mell] of rusToMellExceptions.entries())
+                mellToRusExceptions.set(mell.toLowerCase(), rus);
+            for (let [rus, usb] of rusToUsbExceptions.entries())
+                usbToRusExceptions.set(usb.toLowerCase(), rus);
+
+            const extraReverse = [
+                ["друн", "друг"], ["друность", "друган"], ["учительность", "училка"],
+                ["учинительность", "ученик"], ["учебность", "учеба"], ["кьо этость", "кто это"],
+                ["кьо", "кто"], ["этость", "это"], ["ч", "я"], ["меллстройность", "русский язык"],
+                ["жопотность", "жопа"], ["отказано", "не"], ["п.ч.т.м.ш", "почему"],
+                ["спасибо хорошо", "спасибо"], ["хорошо и спасибо", "хорошо"],
+                ["какатность", "кака"], ["сидить", "сиди"], ["какашатность", "какашка"],
+                ["шакал ебучий", "плохое"], ["ну нормально не ну еще посидим еще посидим", "нормально"],
+                ["сидит и не пизидит", "сиди и не пизди"], ["фобиянка", "фобия"],
+                ["элджеевка", "шприц"], ["юсбя", "юсб"], ["usbis", "usb"], ["пизиди", "пизди"],
+                ["выгналось", "выгнала"], ["котность", "кота"], ["котьян", "котя"],
+                ["клавотность", "клава"], ["котсяшка", "костян"],
+                ["а п.ч.т.м.ш и нетность", "а почему бы и нет"],
+                ["животное", "зай"], ["энглишность", "english"], ["русскотность", "русский"],
+                ["языкотность", "язык"], ["хернейностью", "херней"], ["занимательно", "занимешься"]
+            ];
+            for (let [mell, rus] of extraReverse)
+                if (!mellToRusExceptions.has(mell)) mellToRusExceptions.set(mell, rus);
+
+            // фразы
+            const basePhrases = [
+                ["русский язык", "Меллстройность"],
+                ["кто это", "Кьо этость"],
+                ["не разрешаю", "отказано"],
+                ["спасибо", "спасибо хорошо"],
+                ["хорошо", "хорошо и спасибо"],
+                ["плохое", "шакал ебучий"],
+                ["нормально", "ну нормально не ну еще посидим еще посидим"],
+                ["сиди и не пизди", "Сидит и не пизидит"],
+                ["а почему бы и нет", "А П.Ч.Т.М.Ш и нетность"]
+            ];
+            phraseRusToMell = [...basePhrases];
+            phraseRusToMell.sort((a,b) => b[0].length - a[0].length);
+
+            phraseMellToRus = [
+                ["шакал ебучий", "плохое"],
+                ["спасибо хорошо", "спасибо"],
+                ["хорошо и спасибо", "хорошо"],
+                ["ну нормально не ну еще посидим еще посидим", "нормально"],
+                ["кьо этость", "кто это"],
+                ["меллстройность", "русский язык"],
+                ["п.ч.т.м.ш", "почему"],
+                ["отказано", "не"],
+                ["сидит и не пизидит", "сиди и не пизди"],
+                ["а п.ч.т.м.ш и нетность", "а почему бы и нет"]
+            ];
+            phraseMellToRus.sort((a,b) => b[0].length - a[0].length);
+
+            phraseRusToUsb = [
+                ["русский язык", "USB"],
+                ["кто это", "KTO ETA"],
+                ["не разрешаю", "NIE RASHA"],
+                ["спасибо", "SPS"],
+                ["хорошо", "OkEy"],
+                ["плохое", "PLXO"],
+                ["нормально", "NORM"],
+                ["сиди и не пизди", "CD I NIE PCD"],
+                ["а почему бы и нет", "PCHM BI I NIET"]
+            ];
+            phraseRusToUsb.sort((a,b) => b[0].length - a[0].length);
+
+            phraseUsbToRus = [
+                ["usb", "русский язык"],
+                ["kto eta", "кто это"],
+                ["nie rasha", "не разрешаю"],
+                ["sps", "спасибо"],
+                ["okey", "хорошо"],
+                ["plxo", "плохое"],
+                ["norm", "нормально"],
+                ["cd i nie pcd", "сиди и не пизди"],
+                ["pchm bi i niet", "а почему бы и нет"],
+                ["fbo", "фобия"],
+                ["i", "и"],
+                ["chpric", "шприц"],
+                ["slabit", "слабительное"],
+                ["kaif", "кайф"],
+                ["pcd", "пизди"],
+                ["vygnala", "выгнала"],
+                ["kota", "кота"],
+                ["kotya", "котя"],
+                ["klva", "клава"],
+                ["kstyan", "костян"],
+                ["say", "зай"],
+                ["englsh", "english"],
+                ["rsskiy", "русский"],
+                ["yasik", "язык"],
+                ["xrnia", "херней"],
+                ["zanimaessya", "занимешься"]
+            ];
+            phraseUsbToRus.sort((a,b) => b[0].length - a[0].length);
+
+            document.getElementById('statusMsg').innerHTML = '✅ Словарь загружен';
+            updateTranslation();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('statusMsg').innerHTML = '❌ Ошибка загрузки dictionary.json. Убедитесь, что файл лежит рядом.';
+        }
     }
-    const extraReverse = [
-        ["друн", "друг"], ["друность", "друган"], ["учительность", "училка"],
-        ["учинительность", "ученик"], ["учебность", "учеба"], ["кьо этость", "кто это"],
-        ["кьо", "кто"], ["этость", "это"], ["ч", "я"], ["меллстройность", "русский язык"],
-        ["жопотность", "жопа"], ["отказано", "не"], ["п.ч.т.м.ш", "почему"],
-        ["спасибо хорошо", "спасибо"], ["хорошо и спасибо", "хорошо"],
-        ["какатность", "кака"], ["сидить", "сиди"], ["какашатность", "какашка"],
-        ["шакал ебучий", "плохое"], ["ну нормально не ну еще посидим еще посидим", "нормально"]
-    ];
-    for (let [mell, rus] of extraReverse) {
-        mellToRusExceptions.set(mell, rus);
+
+    // ---------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (те же, что в стабильной версии) ----------------------
+    const cyrToLat = {
+        'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z',
+        'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+        'с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh',
+        'щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'
+    };
+    const latToCyr = {
+        'a':'а','b':'б','v':'в','g':'г','d':'д','e':'е','yo':'ё','zh':'ж','z':'з',
+        'i':'и','y':'й','k':'к','l':'л','m':'м','n':'н','o':'о','p':'п','r':'р',
+        's':'с','t':'т','u':'у','f':'ф','kh':'х','ts':'ц','ch':'ч','sh':'ш',
+        'shch':'щ','yu':'ю','ya':'я','ye':'е','yi':'ы'
+    };
+    function translitToLatin(t) {
+        let r='';
+        for(let ch of t){
+            let lo=ch.toLowerCase();
+            if(cyrToLat[lo]){
+                let repl=cyrToLat[lo];
+                if(ch===ch.toUpperCase() && ch!==lo) repl=repl.charAt(0).toUpperCase()+repl.slice(1);
+                r+=repl;
+            } else r+=ch;
+        }
+        return r;
     }
-
-    const phraseRusToMell = [
-        ["русский язык", "Меллстройность"],
-        ["кто это", "Кьо этость"],
-        ["не разрешаю", "отказано"],
-        ["спасибо", "спасибо хорошо"],
-        ["хорошо", "хорошо и спасибо"],
-        ["плохое", "шакал ебучий"],
-        ["нормально", "ну нормально не ну еще посидим еще посидим"]
-    ];
-
-    const phraseMellToRus = [
-        ["шакал ебучий", "плохое"],
-        ["спасибо хорошо", "спасибо"],
-        ["хорошо и спасибо", "хорошо"],
-        ["ну нормально не ну еще посидим еще посидим", "нормально"],
-        ["кьо этость", "кто это"],
-        ["меллстройность", "русский язык"],
-        ["п.ч.т.м.ш", "почему"],
-        ["отказано", "не"]
-    ];
-
-    phraseRusToMell.sort((a,b) => b[0].length - a[0].length);
-    phraseMellToRus.sort((a,b) => b[0].length - a[0].length);
-
-    function isGarbageWord(word) {
-        if (!word || word.length === 0) return true;
-        const lower = word.toLowerCase();
-        if (word.length <= 2 && !rusToMellExceptions.has(lower)) return true;
-        const laughPatterns = [
-            /(ха){2,}/i, /(ах){2,}/i, /(ол){2,}/i, /(ло){2,}/i, /(ла){2,}/i,
-            /хехе/i, /хихи/i, /хохо/i, /лол/i, /кек/i, /агага/i, /уху/i,
-            /ааа+/i, /ыыы+/i, /еее+/i
-        ];
-        for (let p of laughPatterns) if (p.test(lower)) return true;
-        if (/(.)\1{3,}/i.test(lower)) return true;
-        if (word === word.toUpperCase() && lower.length >= 4 && /^(?:[а-яa-z])(?:[^а-яa-z]?\1)+$/i.test(lower)) return true;
-        if (!/[аеёиоуыэюяaeiou]/i.test(lower)) return true;
+    function translitToCyrillic(t){
+        let r='',i=0;
+        while(i<t.length){
+            let found=false;
+            for(let len=4;len>=1;len--){
+                let part=t.substr(i,len).toLowerCase();
+                if(latToCyr[part]){
+                    let repl=latToCyr[part];
+                    let orig=t.substr(i,len);
+                    if(orig===orig.toUpperCase()) repl=repl.toUpperCase();
+                    else if(orig[0]===orig[0].toUpperCase() && orig.slice(1).toLowerCase()===orig.slice(1))
+                        repl=repl.charAt(0).toUpperCase()+repl.slice(1);
+                    r+=repl;
+                    i+=len;
+                    found=true;
+                    break;
+                }
+            }
+            if(!found){ r+=t[i]; i++; }
+        }
+        return r;
+    }
+    function isGarbage(w){
+        if(!w) return true;
+        let l=w.toLowerCase();
+        if(w.length<=2 && !rusToMellExceptions.has(l)) return true;
+        let lp=[/(ха){2,}/i,/(ах){2,}/i,/(ол){2,}/i,/(ло){2,}/i,/(ла){2,}/i,/(хехе)|(хихи)|(хохо)|(лол)|(кек)|(агага)|(уху)/i,/(.)\1{3,}/i];
+        for(let p of lp) if(p.test(l)) return true;
+        if(w===w.toUpperCase() && l.length>=4 && /^(?:[а-яa-z])(?:[^а-яa-z]?\1)+$/i.test(l)) return true;
+        if(!/[аеёиоуыэюяaeiou]/i.test(l)) return true;
         return false;
     }
-
-    function applyGeneralRule(wordLower) {
-        if (wordLower.endsWith("а")) return wordLower.slice(0, -1) + "оность";
-        if (wordLower.endsWith("я")) return wordLower.slice(0, -1) + "ёность";
-        if (wordLower.endsWith("о")) return wordLower.slice(0, -1) + "ость";
-        if (wordLower.endsWith("е")) return wordLower.slice(0, -1) + "есть";
-        return wordLower + "ность";
+    function applyGeneralRule(wl){
+        if(wl.endsWith("а")) return wl.slice(0,-1)+"оность";
+        if(wl.endsWith("я")) return wl.slice(0,-1)+"ёность";
+        if(wl.endsWith("о")) return wl.slice(0,-1)+"ость";
+        if(wl.endsWith("е")) return wl.slice(0,-1)+"есть";
+        return wl+"ность";
     }
-
-    function reverseGeneralRule(wordLower) {
-        if (wordLower.endsWith("оность")) {
-            let base = wordLower.slice(0, -6);
-            if (base) return base + "а";
-        }
-        if (wordLower.endsWith("ёность")) {
-            let base = wordLower.slice(0, -6);
-            if (base) return base + "я";
-        }
-        if (wordLower.endsWith("ость")) {
-            let base = wordLower.slice(0, -4);
-            if (base) return base + "о";
-        }
-        if (wordLower.endsWith("есть")) {
-            let base = wordLower.slice(0, -4);
-            if (base) return base + "е";
-        }
-        if (wordLower.endsWith("ность")) {
-            let base = wordLower.slice(0, -5);
-            if (base) return base;
-        }
+    function reverseGeneralRule(wl){
+        if(wl.endsWith("оность")){ let b=wl.slice(0,-6); if(b) return b+"а"; }
+        if(wl.endsWith("ёность")){ let b=wl.slice(0,-6); if(b) return b+"я"; }
+        if(wl.endsWith("ость")){ let b=wl.slice(0,-4); if(b) return b+"о"; }
+        if(wl.endsWith("есть")){ let b=wl.slice(0,-4); if(b) return b+"е"; }
+        if(wl.endsWith("ность")){ let b=wl.slice(0,-5); if(b) return b; }
         return null;
     }
-
-    function applyCase(original, transformed) {
-        if (!original || !transformed) return transformed;
-        if (original === original.toUpperCase()) return transformed.toUpperCase();
-        if (original[0] === original[0].toUpperCase() && original.slice(1).toLowerCase() === original.slice(1))
-            return transformed.charAt(0).toUpperCase() + transformed.slice(1).toLowerCase();
-        return transformed.toLowerCase();
+    function applyCase(orig,trans){
+        if(!orig || !trans) return trans;
+        if(orig===orig.toUpperCase()) return trans.toUpperCase();
+        if(orig[0]===orig[0].toUpperCase() && orig.slice(1).toLowerCase()===orig.slice(1))
+            return trans.charAt(0).toUpperCase()+trans.slice(1).toLowerCase();
+        return trans.toLowerCase();
     }
+    function tokenize(t){ return t.split(/(\s+|[^\w\s])/); }
 
-    function tokenize(text) {
-        const regex = /([a-zA-Zа-яА-ЯёЁ]+|[^a-zA-Zа-яА-ЯёЁ]+)/g;
-        return text.match(regex) || [];
-    }
-
-    function translateToMell(text) {
-        if (!text.trim()) return "";
-        let working = text;
-        const placeholders = new Map();
-        let idx = 0;
-
-        for (let [from, to] of phraseRusToMell) {
-            const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(^|[\\s\\p{P}])(${escaped})(?=[\\s\\p{P}]|$)`, 'giu');
-            working = working.replace(regex, (match, before, word) => {
-                let replacement = to;
-                if (word === word.toUpperCase()) replacement = to.toUpperCase();
-                else if (word[0] === word[0].toUpperCase() && word.slice(1).toLowerCase() === word.slice(1))
-                    replacement = to.charAt(0).toUpperCase() + to.slice(1).toLowerCase();
-                else replacement = to.toLowerCase();
-                const ph = `\uE000${idx++}\uE001`;
-                placeholders.set(ph, replacement);
-                return before + ph;
+    function translateToMell(text){
+        if(!text.trim()) return "";
+        let work=text, ph=new Map(), idx=0;
+        for(let [from,to] of phraseRusToMell){
+            let esc=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            let re=new RegExp(`(^|[\\s\\p{P}])(${esc})(?=[\\s\\p{P}]|$)`, 'giu');
+            work=work.replace(re,(match,before,word)=>{
+                let repl=to;
+                if(word===word.toUpperCase()) repl=to.toUpperCase();
+                else if(word[0]===word[0].toUpperCase() && word.slice(1).toLowerCase()===word.slice(1))
+                    repl=to.charAt(0).toUpperCase()+to.slice(1).toLowerCase();
+                else repl=to.toLowerCase();
+                let p=`\uE000${idx++}\uE001`;
+                ph.set(p,repl);
+                return before+p;
             });
         }
-
-        const tokens = tokenize(working);
-        const out = [];
-        for (let t of tokens) {
-            if (placeholders.has(t)) {
-                out.push(placeholders.get(t));
-                continue;
-            }
-            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(t)) {
-                out.push(t);
-                continue;
-            }
-            const low = t.toLowerCase();
-            if (rusToMellExceptions.has(low)) {
-                out.push(applyCase(t, rusToMellExceptions.get(low)));
-                continue;
-            }
-            if (isGarbageWord(t)) {
-                out.push(t);
-                continue;
-            }
+        let tokens=tokenize(work), out=[];
+        for(let t of tokens){
+            if(ph.has(t)){ out.push(ph.get(t)); continue; }
+            if(!/[a-zA-Zа-яА-ЯёЁ]/.test(t)){ out.push(t); continue; }
+            let low=t.toLowerCase();
+            if(rusToMellExceptions.has(low)){ out.push(applyCase(t, rusToMellExceptions.get(low))); continue; }
+            if(isGarbage(t)){ out.push(t); continue; }
             out.push(applyCase(t, applyGeneralRule(low)));
         }
         return out.join('');
     }
-
-    function translateToRus(text) {
-        if (!text.trim()) return "";
-        let working = text;
-        const placeholders = new Map();
-        let idx = 0;
-
-        for (let [from, to] of phraseMellToRus) {
-            const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(^|[\\s\\p{P}])(${escaped})(?=[\\s\\p{P}]|$)`, 'giu');
-            working = working.replace(regex, (match, before, word) => {
-                let replacement = to;
-                if (word === word.toUpperCase()) replacement = to.toUpperCase();
-                else if (word[0] === word[0].toUpperCase() && word.slice(1).toLowerCase() === word.slice(1))
-                    replacement = to.charAt(0).toUpperCase() + to.slice(1).toLowerCase();
-                else replacement = to.toLowerCase();
-                const ph = `\uE000${idx++}\uE001`;
-                placeholders.set(ph, replacement);
-                return before + ph;
+    function translateToRus(text){
+        if(!text.trim()) return "";
+        let work=text, ph=new Map(), idx=0;
+        for(let [from,to] of phraseMellToRus){
+            let esc=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            let re=new RegExp(`(^|[\\s\\p{P}])(${esc})(?=[\\s\\p{P}]|$)`, 'giu');
+            work=work.replace(re,(match,before,word)=>{
+                let repl=to;
+                if(word===word.toUpperCase()) repl=to.toUpperCase();
+                else if(word[0]===word[0].toUpperCase() && word.slice(1).toLowerCase()===word.slice(1))
+                    repl=to.charAt(0).toUpperCase()+to.slice(1).toLowerCase();
+                else repl=to.toLowerCase();
+                let p=`\uE000${idx++}\uE001`;
+                ph.set(p,repl);
+                return before+p;
             });
         }
-
-        const tokens = tokenize(working);
-        const out = [];
-        for (let t of tokens) {
-            if (placeholders.has(t)) {
-                out.push(placeholders.get(t));
-                continue;
-            }
-            if (!/[a-zA-Zа-яА-ЯёЁ]/.test(t)) {
-                out.push(t);
-                continue;
-            }
-            const low = t.toLowerCase();
-            if (mellToRusExceptions.has(low)) {
-                out.push(applyCase(t, mellToRusExceptions.get(low)));
-                continue;
-            }
-            const recovered = reverseGeneralRule(low);
-            if (recovered) {
-                out.push(applyCase(t, recovered));
-            } else {
-                out.push(t);
-            }
+        let tokens=tokenize(work), out=[];
+        for(let t of tokens){
+            if(ph.has(t)){ out.push(ph.get(t)); continue; }
+            if(!/[a-zA-Zа-яА-ЯёЁ]/.test(t)){ out.push(t); continue; }
+            let low=t.toLowerCase();
+            if(mellToRusExceptions.has(low)){ out.push(applyCase(t, mellToRusExceptions.get(low))); continue; }
+            let rec=reverseGeneralRule(low);
+            if(rec) out.push(applyCase(t, rec));
+            else out.push(t);
         }
-        let result = out.join('');
-        result = result.replace(/\bЧ\b/g, 'Я').replace(/\bч\b/g, 'я');
-        return result;
+        let res=out.join('');
+        res=res.replace(/\bЧ\b/g,'Я').replace(/\bч\b/g,'я');
+        return res;
+    }
+    function translateToUsb(text){
+        if(!text.trim()) return "";
+        let work=text, ph=new Map(), idx=0;
+        for(let [from,to] of phraseRusToUsb){
+            let esc=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            let re=new RegExp(`(^|[\\s\\p{P}])(${esc})(?=[\\s\\p{P}]|$)`, 'giu');
+            work=work.replace(re,(match,before,word)=>{
+                let repl=to;
+                if(word===word.toUpperCase()) repl=to.toUpperCase();
+                else if(word[0]===word[0].toUpperCase() && word.slice(1).toLowerCase()===word.slice(1))
+                    repl=to.charAt(0).toUpperCase()+to.slice(1).toLowerCase();
+                else repl=to.toLowerCase();
+                let p=`\uE000${idx++}\uE001`;
+                ph.set(p,repl);
+                return before+p;
+            });
+        }
+        let tokens=tokenize(work), out=[];
+        for(let t of tokens){
+            if(ph.has(t)){ out.push(ph.get(t)); continue; }
+            if(!/[a-zA-Zа-яА-ЯёЁ]/.test(t)){ out.push(t); continue; }
+            let low=t.toLowerCase();
+            if(rusToUsbExceptions.has(low)){ out.push(applyCase(t, rusToUsbExceptions.get(low))); continue; }
+            out.push(translitToLatin(t));
+        }
+        return out.join('');
+    }
+    function translateFromUsb(text){
+        if(!text.trim()) return "";
+        let work=text, ph=new Map(), idx=0;
+        for(let [from,to] of phraseUsbToRus){
+            let esc=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            let re=new RegExp(`(^|[\\s\\p{P}])(${esc})(?=[\\s\\p{P}]|$)`, 'giu');
+            work=work.replace(re,(match,before,word)=>{
+                let repl=to;
+                if(word===word.toUpperCase()) repl=to.toUpperCase();
+                else if(word[0]===word[0].toUpperCase() && word.slice(1).toLowerCase()===word.slice(1))
+                    repl=to.charAt(0).toUpperCase()+to.slice(1).toLowerCase();
+                else repl=to.toLowerCase();
+                let p=`\uE000${idx++}\uE001`;
+                ph.set(p,repl);
+                return before+p;
+            });
+        }
+        let tokens=tokenize(work), out=[];
+        for(let t of tokens){
+            if(ph.has(t)){ out.push(ph.get(t)); continue; }
+            if(!/^[a-zA-Z]+$/.test(t)){ out.push(t); continue; }
+            let low=t.toLowerCase();
+            if(usbToRusExceptions.has(low)){ out.push(applyCase(t, usbToRusExceptions.get(low))); continue; }
+            out.push(translitToCyrillic(t));
+        }
+        return out.join('');
     }
 
-    const inputArea = document.getElementById('inputArea');
-    const outputArea = document.getElementById('outputArea');
-    const leftLangLabel = document.getElementById('leftLang');
-    const rightLangLabel = document.getElementById('rightLang');
-    const swapBtn = document.getElementById('swapBtn');
-
-    let currentMode = 'ru-to-mell';
-
-    function updateTranslation() {
-        const inputText = inputArea.value;
-        if (currentMode === 'ru-to-mell') {
-            outputArea.innerText = translateToMell(inputText);
-        } else {
-            outputArea.innerText = translateToRus(inputText);
-        }
+    // UI
+    const input=document.getElementById('inputArea'), output=document.getElementById('outputArea');
+    const leftSel=document.getElementById('leftLangSelect'), rightSel=document.getElementById('rightLangSelect');
+    const swapBtn=document.getElementById('swapBtn');
+    function updateTranslation(){
+        let src=leftSel.value, dst=rightSel.value;
+        if(src===dst){ output.innerText=input.value; return; }
+        let txt=input.value, res;
+        if(src==='ru' && dst==='mell') res=translateToMell(txt);
+        else if(src==='mell' && dst==='ru') res=translateToRus(txt);
+        else if(src==='ru' && dst==='usb') res=translateToUsb(txt);
+        else if(src==='usb' && dst==='ru') res=translateFromUsb(txt);
+        else if(src==='mell' && dst==='usb') res=translateToUsb(translateToRus(txt));
+        else if(src==='usb' && dst==='mell') res=translateToMell(translateFromUsb(txt));
+        else res=txt;
+        output.innerText=res;
     }
-
-    let debounceTimer;
-    function debouncedUpdate() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(updateTranslation, 250);
-    }
-
-    inputArea.addEventListener('input', debouncedUpdate);
-
-    function swapLanguages() {
-        if (currentMode === 'ru-to-mell') {
-            currentMode = 'mell-to-ru';
-            leftLangLabel.innerText = 'Меллстройный';
-            rightLangLabel.innerText = 'Русский';
-        } else {
-            currentMode = 'ru-to-mell';
-            leftLangLabel.innerText = 'Русский';
-            rightLangLabel.innerText = 'Меллстройный';
+    let timer;
+    function debounce(){ clearTimeout(timer); timer=setTimeout(updateTranslation,250); }
+    input.addEventListener('input',debounce);
+    leftSel.addEventListener('change',()=>{
+        if(leftSel.value===rightSel.value){
+            let other=leftSel.value==='ru'?'mell':(leftSel.value==='mell'?'usb':'ru');
+            rightSel.value=other;
         }
-        const leftText = inputArea.value;
-        const rightText = outputArea.innerText;
-        inputArea.value = rightText;
+        debounce();
+    });
+    rightSel.addEventListener('change',()=>{
+        if(rightSel.value===leftSel.value){
+            let other=rightSel.value==='ru'?'mell':(rightSel.value==='mell'?'usb':'ru');
+            leftSel.value=other;
+        }
+        debounce();
+    });
+    swapBtn.addEventListener('click',()=>{
+        let l=leftSel.value, r=rightSel.value;
+        leftSel.value=r; rightSel.value=l;
+        let leftTxt=input.value, rightTxt=output.innerText;
+        input.value=rightTxt;
         updateTranslation();
-    }
-
-    swapBtn.addEventListener('click', swapLanguages);
-
-    inputArea.value = 'нормально, попа, жопа, училка, нет, почему';
-    currentMode = 'ru-to-mell';
-    leftLangLabel.innerText = 'Русский';
-    rightLangLabel.innerText = 'Меллстройный';
-    updateTranslation();
+    });
+    loadDictionary().then(()=>{
+        input.value='';
+        updateTranslation();
+    });
 </script>
 </body>
 </html>
