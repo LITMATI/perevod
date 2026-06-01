@@ -324,16 +324,6 @@
         return null;
     }
 
-    function usbGeneralRule(wordLower) {
-        let result = '';
-        for (let ch of wordLower) {
-            if ('аеёиоуыэюя'.includes(ch)) result += 'aeiouyaeuya'['аеёиоуыэюя'.indexOf(ch)] || ch;
-            else if ('бвгджзйклмнпрстфхцчшщъыь'.includes(ch)) result += 'bvgdjzklnmprstfhcssy'['бвгджзйклмнпрстфхцчшщъыь'.indexOf(ch)] || ch;
-            else result += ch;
-        }
-        return result.toUpperCase().replace(/[^A-Z]/g, '');
-    }
-
     function applyCase(original, transformed) {
         if (!original || !transformed) return transformed;
         if (original === original.toUpperCase()) return transformed.toUpperCase();
@@ -347,20 +337,15 @@
         return text.match(regex) || [];
     }
 
-    function translateByRules(text, srcLang, dstLang) {
+    function translateDirect(text, srcLang, dstLang) {
         if (!text.trim()) return "";
         if (srcLang === dstLang) return text;
-        if ((srcLang === 'usb' && dstLang === 'mell') || (srcLang === 'mell' && dstLang === 'usb')) {
-            const through = translateByRules(text, srcLang, 'ru');
-            return translateByRules(through, 'ru', dstLang);
-        }
 
         let working = text;
         const placeholders = new Map();
         let idx = 0;
 
-        let phrasesFrom, exceptionsMap, generalRule;
-        let useGeneralRule = true;
+        let phrasesFrom, exceptionsMap, generalRule, useGeneralRule = true;
         if (srcLang === 'ru' && dstLang === 'mell') {
             phrasesFrom = phraseRusToMell;
             exceptionsMap = rusToMellExceptions;
@@ -372,29 +357,32 @@
         } else if (srcLang === 'ru' && dstLang === 'usb') {
             phrasesFrom = phraseRusToUsb;
             exceptionsMap = rusToUsbExceptions;
-            generalRule = usbGeneralRule;
+            useGeneralRule = false;
+            generalRule = null;
         } else if (srcLang === 'usb' && dstLang === 'ru') {
             phrasesFrom = phraseUsbToRus;
             exceptionsMap = usbToRusExceptions;
-            generalRule = null;
             useGeneralRule = false;
+            generalRule = null;
         } else {
             return text;
         }
 
-        for (let [from, to] of phrasesFrom) {
-            const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(^|[\\s\\p{P}])(${escaped})(?=[\\s\\p{P}]|$)`, 'giu');
-            working = working.replace(regex, (match, before, word) => {
-                let replacement = to;
-                if (word === word.toUpperCase()) replacement = to.toUpperCase();
-                else if (word[0] === word[0].toUpperCase() && word.slice(1).toLowerCase() === word.slice(1))
-                    replacement = to.charAt(0).toUpperCase() + to.slice(1).toLowerCase();
-                else replacement = to.toLowerCase();
-                const ph = `\uE000${idx++}\uE001`;
-                placeholders.set(ph, replacement);
-                return before + ph;
-            });
+        if (phrasesFrom) {
+            for (let [from, to] of phrasesFrom) {
+                const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(^|[\\s\\p{P}])(${escaped})(?=[\\s\\p{P}]|$)`, 'giu');
+                working = working.replace(regex, (match, before, word) => {
+                    let replacement = to;
+                    if (word === word.toUpperCase()) replacement = to.toUpperCase();
+                    else if (word[0] === word[0].toUpperCase() && word.slice(1).toLowerCase() === word.slice(1))
+                        replacement = to.charAt(0).toUpperCase() + to.slice(1).toLowerCase();
+                    else replacement = to.toLowerCase();
+                    const ph = `\uE000${idx++}\uE001`;
+                    placeholders.set(ph, replacement);
+                    return before + ph;
+                });
+            }
         }
 
         const tokens = tokenize(working);
@@ -409,7 +397,7 @@
                 continue;
             }
             const low = t.toLowerCase();
-            if (exceptionsMap.has(low)) {
+            if (exceptionsMap && exceptionsMap.has(low)) {
                 out.push(applyCase(t, exceptionsMap.get(low)));
                 continue;
             }
@@ -431,6 +419,19 @@
         return out.join('');
     }
 
+    function translateViaRussian(text, srcLang, dstLang) {
+        const rus = translateDirect(text, srcLang, 'ru');
+        return translateDirect(rus, 'ru', dstLang);
+    }
+
+    function translate(text, srcLang, dstLang) {
+        if (srcLang === dstLang) return text;
+        if ((srcLang === 'usb' && dstLang === 'mell') || (srcLang === 'mell' && dstLang === 'usb')) {
+            return translateViaRussian(text, srcLang, dstLang);
+        }
+        return translateDirect(text, srcLang, dstLang);
+    }
+
     const inputArea = document.getElementById('inputArea');
     const outputArea = document.getElementById('outputArea');
     const leftLangSelect = document.getElementById('leftLangSelect');
@@ -441,11 +442,7 @@
         const srcLang = leftLangSelect.value;
         const dstLang = rightLangSelect.value;
         const inputText = inputArea.value;
-        if (srcLang === dstLang) {
-            outputArea.innerText = inputText;
-            return;
-        }
-        const result = translateByRules(inputText, srcLang, dstLang);
+        const result = translate(inputText, srcLang, dstLang);
         outputArea.innerText = result;
     }
 
@@ -472,8 +469,8 @@
 
     swapBtn.addEventListener('click', swapLanguages);
 
-    inputArea.value = 'нормально, попа, жопа, училка, нет, почему';
-    leftLangSelect.value = 'ru';
+    inputArea.value = 'привет';
+    leftLangSelect.value = 'usb';
     rightLangSelect.value = 'mell';
     updateTranslation();
 </script>
