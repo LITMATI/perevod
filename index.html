@@ -133,9 +133,6 @@
 </div>
 
 <script>
-    // --------------------------------------------------------------
-    // 1. СЛОВАРЬ ИСКЛЮЧЕНИЙ (Excel + ручные)
-    // --------------------------------------------------------------
     const rusToMellExceptions = new Map([
         ["русский язык", "Меллстройность"],
         ["училка", "Учительность"],
@@ -164,7 +161,7 @@
     for (let [rus, mell] of rusToMellExceptions.entries()) {
         mellToRusExceptions.set(mell.toLowerCase(), rus);
     }
-    // дополнительные обратные соответствия
+
     const extraReverse = [
         ["друн", "друг"], ["друность", "друган"], ["учительность", "училка"],
         ["учинительность", "ученик"], ["учебность", "учеба"], ["кьо этость", "кто это"],
@@ -178,7 +175,6 @@
         mellToRusExceptions.set(mell, rus);
     }
 
-    // Фразы с пробелами для приоритетной замены
     const phraseRusToMell = [
         ["русский язык", "Меллстройность"],
         ["кто это", "Кьо этость"],
@@ -200,7 +196,6 @@
         ["отказано", "не"]
     ];
 
-    // Замена фраз с границами слов (учитывает пробелы и знаки препинания)
     function replacePhrases(text, phrases) {
         let result = text;
         for (let [from, to] of phrases) {
@@ -218,9 +213,6 @@
         return result;
     }
 
-    // --------------------------------------------------------------
-    // 2. МУСОРНЫЕ СЛОВА (не переводим)
-    // --------------------------------------------------------------
     function isGarbageWord(word) {
         if (!word || word.length === 0) return true;
         const lower = word.toLowerCase();
@@ -237,9 +229,6 @@
         return false;
     }
 
-    // --------------------------------------------------------------
-    // 3. ОСНОВНЫЕ ПРАВИЛА (попа → попоность)
-    // --------------------------------------------------------------
     function applyGeneralRule(wordLower) {
         if (wordLower.endsWith("а")) return wordLower.slice(0, -1) + "оность";
         if (wordLower.endsWith("я")) return wordLower.slice(0, -1) + "ёность";
@@ -285,9 +274,6 @@
         return text.match(regex) || [];
     }
 
-    // --------------------------------------------------------------
-    // 4. ПЕРЕВОД РУССКИЙ -> МЕЛЛСТРОЙНЫЙ
-    // --------------------------------------------------------------
     function translateToMell(text) {
         if (!text.trim()) return "";
         let working = replacePhrases(text, phraseRusToMell);
@@ -312,9 +298,6 @@
         return out.join('');
     }
 
-    // --------------------------------------------------------------
-    // 5. ПЕРЕВОД МЕЛЛСТРОЙНЫЙ -> РУССКИЙ
-    // --------------------------------------------------------------
     function translateToRus(text) {
         if (!text.trim()) return "";
         let working = replacePhrases(text, phraseMellToRus);
@@ -342,16 +325,13 @@
         return result;
     }
 
-    // --------------------------------------------------------------
-    // 6. UI: строго как в Google — ввод только слева, вывод справа
-    // --------------------------------------------------------------
     const inputArea = document.getElementById('inputArea');
     const outputArea = document.getElementById('outputArea');
     const leftLangLabel = document.getElementById('leftLang');
     const rightLangLabel = document.getElementById('rightLang');
     const swapBtn = document.getElementById('swapBtn');
 
-    let currentMode = 'ru-to-mell'; // 'ru-to-mell' или 'mell-to-ru'
+    let currentMode = 'ru-to-mell'; 
 
     function updateTranslation() {
         const inputText = inputArea.value;
@@ -381,17 +361,15 @@
             leftLangLabel.innerText = 'Русский';
             rightLangLabel.innerText = 'Меллстройный';
         }
-        // переносим текст из правого (вывода) в левый (ввод) и очищаем вывод?
-        // Логика: при обмене местами меняем исходный текст на перевод и наоборот.
         const leftText = inputArea.value;
         const rightText = outputArea.innerText;
         inputArea.value = rightText;
-        updateTranslation(); // пересчитаем перевод для нового текста
+        updateTranslation(); 
     }
 
     swapBtn.addEventListener('click', swapLanguages);
 
-    // демо-пример
+
     inputArea.value = 'плохое, попа, жопа, училка, нет, почему, ахахаха';
     currentMode = 'ru-to-mell';
     leftLangLabel.innerText = 'Русский';
