@@ -345,25 +345,26 @@
         const placeholders = new Map();
         let idx = 0;
 
-        let phrasesFrom, exceptionsMap, generalRule, useGeneralRule = true;
+        let phrasesFrom = null, exceptionsMap = null, generalRule = null, useGeneralRule = false;
+
         if (srcLang === 'ru' && dstLang === 'mell') {
             phrasesFrom = phraseRusToMell;
             exceptionsMap = rusToMellExceptions;
             generalRule = applyGeneralRule;
+            useGeneralRule = true;
         } else if (srcLang === 'mell' && dstLang === 'ru') {
             phrasesFrom = phraseMellToRus;
             exceptionsMap = mellToRusExceptions;
             generalRule = reverseGeneralRule;
+            useGeneralRule = true;
         } else if (srcLang === 'ru' && dstLang === 'usb') {
             phrasesFrom = phraseRusToUsb;
             exceptionsMap = rusToUsbExceptions;
             useGeneralRule = false;
-            generalRule = null;
         } else if (srcLang === 'usb' && dstLang === 'ru') {
             phrasesFrom = phraseUsbToRus;
             exceptionsMap = usbToRusExceptions;
             useGeneralRule = false;
-            generalRule = null;
         } else {
             return text;
         }
@@ -399,10 +400,6 @@
             const low = t.toLowerCase();
             if (exceptionsMap && exceptionsMap.has(low)) {
                 out.push(applyCase(t, exceptionsMap.get(low)));
-                continue;
-            }
-            if (srcLang === 'ru' && dstLang === 'mell' && isGarbageWord(t)) {
-                out.push(t);
                 continue;
             }
             if (useGeneralRule && generalRule) {
