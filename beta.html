@@ -156,7 +156,7 @@
 </div>
 
 <script>
-    // ======================= СЛОВАРИ ИСКЛЮЧЕНИЙ =======================
+    // ======================= СЛОВАРИ ИСКЛЮЧЕНИЙ (обновлены из Excel) =======================
     const rusToMellExceptions = new Map([
         ["русский язык", "Меллстройность"],
         ["училка", "Учительность"],
@@ -179,7 +179,14 @@
         ["какашка", "какашатность"],
         ["плохое", "шакал ебучий"],
         ["нормально", "ну нормально не ну еще посидим еще посидим"],
-        ["сиди и не пизди", "Сидит и не пизидит"]
+        ["сиди и не пизди", "Сидит и не пизидит"],
+        ["фобия", "Фобиянка"],
+        ["и", "И"],
+        ["шприц", "элджеевка"],
+        ["слабительное", "элджеевка"],
+        ["кайф", "элджеевка"],
+        ["юсб", "ЮСБЯ"],
+        ["usb", "USBIs"]
     ]);
 
     const mellToRusExceptions = new Map();
@@ -194,7 +201,8 @@
         ["спасибо хорошо", "спасибо"], ["хорошо и спасибо", "хорошо"],
         ["какатность", "кака"], ["сидить", "сиди"], ["какашатность", "какашка"],
         ["шакал ебучий", "плохое"], ["ну нормально не ну еще посидим еще посидим", "нормально"],
-        ["сидит и не пизидит", "сиди и не пизди"]
+        ["сидит и не пизидит", "сиди и не пизди"], ["фобиянка", "фобия"], ["и", "и"],
+        ["элджеевка", "шприц"], ["юсбя", "юсб"], ["usbis", "usb"]
     ];
     for (let [mell, rus] of extraReverse) {
         mellToRusExceptions.set(mell, rus);
@@ -222,7 +230,14 @@
         ["какашка", "KAKASHEHKA"],
         ["плохое", "PLXO"],
         ["нормально", "NORM"],
-        ["сиди и не пизди", "CD I NIE PCD"]
+        ["сиди и не пизди", "CD I NIE PCD"],
+        ["фобия", "FBO"],
+        ["и", "I"],
+        ["шприц", "CHPRIC"],
+        ["слабительное", "SLABIT"],
+        ["кайф", "KAIF"],
+        ["юсб", "USB"],
+        ["usb", "USB"]
     ]);
 
     const usbToRusExceptions = new Map();
@@ -270,7 +285,12 @@
         ["okey", "хорошо"],
         ["plxo", "плохое"],
         ["norm", "нормально"],
-        ["cd i nie pcd", "сиди и не пизди"]
+        ["cd i nie pcd", "сиди и не пизди"],
+        ["fbo", "фобия"],
+        ["i", "и"],
+        ["chpric", "шприц"],
+        ["slabit", "слабительное"],
+        ["kaif", "кайф"]
     ];
 
     phraseRusToMell.sort((a,b) => b[0].length - a[0].length);
@@ -429,7 +449,6 @@
                 out.push(t);
                 continue;
             }
-            // проверяем, есть ли слово в словаре исходного языка
             let known = false;
             if (srcLang === 'usb') {
                 known = usbToRusExceptions.has(t.toLowerCase());
@@ -439,12 +458,10 @@
                 known = rusToMellExceptions.has(t.toLowerCase()) || rusToUsbExceptions.has(t.toLowerCase());
             }
             if (!known) {
-                out.push(t); // не знаем слово — не переводим
+                out.push(t);
                 continue;
             }
-            // переводим в русский
             const rus = translateDirect(t, srcLang, 'ru');
-            // затем из русского в целевой язык
             const final = translateDirect(rus, 'ru', dstLang);
             out.push(final);
         }
@@ -453,16 +470,12 @@
 
     function translate(text, srcLang, dstLang) {
         if (srcLang === dstLang) return text;
-        // Прямые пары с русским и меллстройным уже работают через translateDirect
-        // Для пар USB <-> mell используем транзит через русский, но только если слово известно в USB
         if ((srcLang === 'usb' && dstLang === 'mell') || (srcLang === 'mell' && dstLang === 'usb')) {
             return translateViaRussianIfKnown(text, srcLang, dstLang);
         }
-        // Для пар, где одна сторона USB, а другая русский, используем translateDirect (он не применяет общих правил)
         if ((srcLang === 'usb' && dstLang === 'ru') || (srcLang === 'ru' && dstLang === 'usb')) {
             return translateDirect(text, srcLang, dstLang);
         }
-        // Для пар русский <-> мелл
         if ((srcLang === 'ru' && dstLang === 'mell') || (srcLang === 'mell' && dstLang === 'ru')) {
             return translateDirect(text, srcLang, dstLang);
         }
